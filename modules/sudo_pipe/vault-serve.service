@@ -1,0 +1,13 @@
+[Unit]
+Description=vault static file service (tailscale serve, HTTPS proxy for vault share)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/tailscale serve --bg /home/terl/vault
+ExecStop=/usr/bin/tailscale serve reset
+
+[Install]
+WantedBy=multi-user.target

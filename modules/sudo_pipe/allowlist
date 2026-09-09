@@ -1,0 +1,28 @@
+# vault-exec allowlist — id|allowed_opts|<fixed argv with optional %o slot>
+#   id            request cmd (public, peekable — grants nothing by itself)
+#   allowed_opts  comma-separated whitelist for %o, or "-" for none
+#   argv          fixed program + args; %o is replaced by validated opts.
+#                 Everything except %o is root-owned static — never request input.
+# Only terl's private key signature unlocks these; GitHub peeking is harmless.
+#
+# --- aliveness ----------------------------------------------------------------
+ping|pong|/usr/bin/echo %o
+#
+# --- vault static file service ------------------------------------------------
+serve-vault|-|/usr/bin/tailscale serve --bg /home/terl/vault
+serve-current|-|/usr/bin/tailscale serve --bg /home/terl/dev/current
+serve-status|-|/usr/bin/tailscale serve status
+serve-reset|-|/usr/bin/tailscale serve reset
+
+# --- install vault-serve.service (one-time, idempotent) -----------------------
+vault-serve-install|-|/usr/local/sbin/vault-services.sh install
+
+# --- sshd (tagged service) ----------------------------------------------------
+sshd|enable,disable|/usr/bin/systemctl %o --now sshd
+sshd-status|-|/usr/bin/systemctl status sshd
+
+# --- ip forwarding (exit-node prerequisite) -----------------------------------
+ip-forward-on|-|/usr/sbin/sysctl -w net.ipv4.ip_forward=1 net.ipv6.conf.all.forwarding=1
+
+# --- systemd reload for unit changes -------------------------------------------
+reload-daemon|-|/usr/bin/systemctl daemon-reload

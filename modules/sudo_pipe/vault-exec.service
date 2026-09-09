@@ -1,0 +1,12 @@
+[Unit]
+Description=vault-exec signed-request root runner
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/vault-exec.sh
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

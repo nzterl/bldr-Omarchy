@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# vaultctl — terl-side client for the vault-exec signed-request root pipe.
+# Signs a request with the private key, drops it in the queue, waits for the
+# root runner, prints output, exits with its status.
+#
+#   vaultctl list                          # show allowlisted ids
+#   vaultctl <id> [opts...]                # run a command (id + whitelisted opts)
+#   VAULT_EXEC_TIMEOUT=90 vaultctl <id>    # adjust wait
+set -euo pipefail
+
+Q="${VAULT_EXEC_QUEUE:-/run/vault-exec/queue}"
+D="${VAULT_EXEC_DONE:-/run/vault-exec/done}"
+FIFO="${VAULT_EXEC_FIFO:-/run/vault-exec/queue.wake}"
+KEY="${VAULT_EXEC_KEY:-$HOME/.config/vault-exec/id_vault}"
+ALLOW="${VAULT_EXEC_ALLOW:-/etc/vault-exec/allowlist}"
+TIMEOUT="${VAULT_EXEC_TIMEOUT:-60}"
+
+if [ "$(id -u)" -eq 0 ]; then
+  echo "vaultctl runs as the non-root user, not root" >&2
+  exit 2
+fi
+
+if [ "${1:-}" = "list" ]; then
+  awk -F'|' '!/^#/ && NF>1 {printf "%-22s %s\n", $1, $3}' "$ALLOW"
+  exit 0
+fi
+
+id="${1:?usage: vaultctl <id> [opts...]  |  vaultctl list}"
+shift || true
+opts="${*:-}"
+
+# allowlist has this id AND (if opts given) each opt is whitelisted
+spec=$(awk -F'|' -v c="$id" '$1==c {print $2; f=1; exit} END {exit !f}' "$ALLOW") || {
+  echo "unknown or disallowed id: $id (see: vaultctl list)"; exit 2; }
+if [ -n "$opts" ]; then
+  for o in $opts; do
+    if [ "$spec" = "-" ] || ! [[ ",$spec," == *",$o,"* ]]; then
+      echo "opts not allowed for $id: $o (allowed: $spec)"; exit 2
+    fi
+  done
+fi
+
+[ -f "$KEY" ] || { echo "no signing key at $KEY (run install.sh)"; exit 2; }
+[ -d "$Q" ]   || { echo "vault-exec not running (is vault-exec.service active?)"; exit 1; }
+[ -x "$(command -v openssl)" ] || { echo "openssl required"; exit 2; }
+
+# --- build the signed message: id|opts|ts ----------------------------------
+# ed25519 rawin needs a seekable file, not a pipe (openssl-3 quirk).
+ts=$(date +%s)
+msg="$id|$opts|$ts"
+signf=$(mktemp "${TMPDIR:-/tmp}/vaultctl.sign.XXXXXX")
+msgf=$(mktemp "${TMPDIR:-/tmp}/vaultctl.msg.XXXXXX")
+trap 'rm -f "$signf" "$msgf"' EXIT
+printf '%s' "$msg" > "$msgf"
+openssl pkeyutl -sign -inkey "$KEY" -rawin -in "$msgf" -out "$signf" \
+  || { echo "signing failed" >&2; exit 2; }
+sig=$(base64 -w0 < "$signf")
+
+req="$id.$$.$(date +%s%N)"
+json_opts=$(printf '%s' "$opts" | awk '{printf "["; for(i=1;i<=NF;i++){printf "\"%s\"",$i; if(i<NF) printf ","} printf "]"}')
+[ -n "$opts" ] || json_opts="[]"
+printf '{"cmd":"%s","opts":%s,"ts":%s,"tok":"%s"}' "$id" "$json_opts" "$ts" "$sig" > "$Q/$req"
+
+# wake the daemon — open the FIFO read-write (O_RDWR never blocks on a FIFO,
+# unlike plain O_WRONLY) so vaultctl can't hang if the daemon is mid-restart.
+if [ -p "$FIFO" ]; then
+  exec 4<> "$FIFO" 2>/dev/null && { printf '\n' >&4; exec 4>&-; } || true
+fi
+
+# --- wait for the root runner to finish --------------------------------------
+ok=0
+for _ in $(seq 1 "$TIMEOUT"); do
+  [ -f "$D/$req.out" ] && [ -f "$D/$req.rc" ] && { ok=1; break; }
+  sleep 1
+done
+[ "$ok" -eq 1 ] || { echo "timed out waiting for $id (${TIMEOUT}s)"; rm -f "$Q/$req"; exit 3; }
+
+if [ -s "$D/$req.out" ]; then cat "$D/$req.out"; fi
+rc=1; [ -f "$D/$req.rc" ] && rc=$(cat "$D/$req.rc")
+rm -f -- "$D/$req.out" "$D/$req.err" "$D/$req.rc"
+exit "$rc"

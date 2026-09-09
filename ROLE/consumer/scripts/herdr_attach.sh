@@ -21,6 +21,5 @@ herdr --remote "$TARGET" "$@" || {
   echo "  herdr session attach digs   # or:  tmux attach -t digs"
   echo "  opencode                    # resume the agent conversation"
   echo
-  echo "Direct:");
   ssh "$TARGET" "-t bash -lc 'herdr session attach digs || tmux attach -t digs; exec \${SHELL}'"
 }
