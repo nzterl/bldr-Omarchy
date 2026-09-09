@@ -29,7 +29,9 @@ node instead.
   `scripts/herdr_attach.sh digs`). Omarchy already binds `SUPER CTRL + RETURN`
   -> Herdr and `SUPER ALT + RETURN` -> tmux.
 - **Why**: `digs` runs a persistent herdr session hosting the opencode agent
-  conversation; remote-attach lands you back in it from the laptop.
+  conversation; remote-attach lands you back in it from the laptop. When you
+  attach, the `~/Work` pane already runs `opencode -s ses_f801b903...`
+  (the workshop build conversation) — just keep typing there.
 - **How**: see `modules/herdr/README.md`. Requires tailscale SSH from the
   laptop to `digs`.
 - **Revert**: none (it's just an attach).

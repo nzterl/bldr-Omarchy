@@ -15,15 +15,28 @@ raw tmux for agent work and can be attached *remotely* through SSH.
   - `~/.config/opencode/tui.jsonc` -> loads `./herdr-tui-session.js`
   - To (re)install: `herdr integration install opencode`
 
+## Current agent stage (this conversation)
+- **`opencode`** is running as the herdr agent in the digs session pane
+  **`w1:p1`** (cwd `~/Work`), resuming session
+  **`ses_f801b903cffe8FIAIvmtDEMcCG`** ("HP USB boot not working" → digs node).
+- Start/resume it (repeatable):
+  ```bash
+  # talk to the digs session's server:
+  export HERDR_SOCKET_PATH=$HOME/.config/herdr/sessions/digs/herdr.sock
+  herdr pane list --workspace w1
+  herdr pane run w1:p1 'cd /home/terl/Work && opencode -s ses_f801b903cffe8FIAIvmtDEMcCG'
+  herdr agent list          # -> opencode, idle
+  ```
+
 ## From a consumer (laptop)
 - Omarchy binds `SUPER CTRL + RETURN` -> Herdr (local herdr) and
   `SUPER ALT + RETURN` -> tmux.
 - To pop the **digs** session from another machine:
-  `herdr --remote digs`  (herdr's SSH remote attach)
-  or the helper: `ROLE/consumer/scripts/herdr_attach.sh digs`
-- Inside the digs session, an agent pane can be started with:
-  `herdr agent start myagent --kind opencode --pane <ID>` (resume the
-  conversation with `opencode` and its session list).
+  `herdr --remote terl@digs`  (herdr's SSH remote attach; needs sshd on digs,
+  see exit-node T6)
+  or the helper: `ROLE/consumer/scripts/herdr_attach.sh terl@digs`
+- Inside the attached digs session you land in the `~/Work` pane where the
+  `opencode` agent already runs — continue the conversation there.
 
 ## Notes
 - herdr 0.9.0 is available but NOT auto-updated here; update explicitly with
