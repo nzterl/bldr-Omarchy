@@ -3,7 +3,7 @@
 # Serve the ~/current workspace over the tailnet so a consumer can browse it.
 #
 # Usage:
-#   ./02_shares.sh up    # (re)serve the workspace (default)
+#   sudo ./02_shares.sh up    # (re)serve the workspace (default; path/socket serve needs root)
 #   ./02_shares.sh down  # stop serving
 #   ./02_shares.sh status
 set -euo pipefail
@@ -14,9 +14,9 @@ action="${2:-up}"
 case "$action" in
   up)
     [[ -d "$SHARE" ]] || { echo "share not found: $SHARE" >&2; exit 1; }
-    tailscale serve "$SHARE"
+    sudo tailscale serve "$SHARE"
     echo "[up] serving:"
-    tailscale serve status
+    sudo tailscale serve status
     ;;
   down)
     tailscale serve reset || true
