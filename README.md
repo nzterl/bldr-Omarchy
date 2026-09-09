@@ -26,15 +26,14 @@ buildit/       reserved slot for a future BuildIt ruby crop, if it earns its pla
 
 ## Replay on another machine (e.g. laptop)
 
-No extras needed — just ssh into digs and read:
+No extras needed — `ROLE/consumer/README.md` is the zero-to-session walkthrough
+(git-clone → tailnet → ssh → herdr attach lands back in the digs agent pane).
+Quick start:
 
-1. Talk to digs over SSH; the vault is at `/home/terl/vault/bldr-Omarchy`.
-2. Or fetch it yourself (git-first, serve-fallback):
-   `./ROLE/consumer/scripts/bootstrap_from_service.sh`
-3. Pick your role:
-   - consumer → read `ROLE/consumer/`, follow `ROLE/consumer/TWEAKS.md`
-   - exit-node → read `ROLE/exit-node/`, run `ROLE/exit-node/scripts/00_vault_up.sh up`
-4. Tweak to taste; each `TWEAKS.md` documents what each change does and how to revert.
+1. Fetch: `git clone git@github.com:nzterl/bldr-Omarchy.git` (public, no tailnet).
+2. Join + reach digs (consumer role): `ROLE/consumer/scripts/tailscale_up_client.sh up`.
+3. `ssh terl@digs` (sshd :22 with your key, or Tailscale SSH ACL).
+4. Land in the agent session: `ROLE/consumer/scripts/herdr_attach.sh digs`.
 
 The `modules/sudo_pipe` signed-request runner is the root shell: `vaultctl
 ping pong` round-trips a signed request through a root daemon, letting terl/
