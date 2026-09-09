@@ -44,6 +44,14 @@ Each tweak is logged here: what, why, how, and how to revert.
 - **How**: `02_shares.sh`.
 - **Revert**: `tailscale serve reset` (or `tailscale serve` the path away).
 
+### T6 — sshd on port 22 (for ssh/scp/herdr --remote from the laptop)
+- **What**: `systemctl enable --now sshd` (openssh already installed).
+- **Why**: Tailscale SSH works at the tailnet layer, but herdr `--remote` and
+  plain `ssh`/`scp`/`sshfs` need a port-22 listener. Enabling sshd gives the
+  laptop a real `ssh terl@digs` + `herdr --remote terl@digs` path.
+- **How**: `sudo ./scripts/06_enable_sshd.sh`.
+- **Revert**: `sudo systemctl disable --now sshd`.
+
 ### T5 — `bldr-Omarchy` placed in the share
 - **What**: this repo lives at `~/dev/current/bldr-Omarchy`.
 - **Why**: it is served automatically through `~/current` (→ the >serve and
@@ -52,6 +60,7 @@ Each tweak is logged here: what, why, how, and how to revert.
 
 ## Order to apply on a fresh build
 1. `01_tailscale_exit_node.sh`  (T1, T2, T3)
-2. `02_shares.sh`               (T4)
-3. clone/place `bldr-Omarchy` in the share (T5)
-4. `03_health.sh`               (observe)
+2. `06_enable_sshd.sh`          (T6) — needed before herdr remote/ssh
+3. `02_shares.sh`               (T4)
+4. clone/place `bldr-Omarchy` in the share (T5)
+5. `03_health.sh`               (observe)
