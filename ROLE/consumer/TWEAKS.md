@@ -24,7 +24,18 @@ node instead.
 - **Why**: "cruise" the `~/current` share and pull `bldr-Omarchy`.
 - **Revert**: none (read ops).
 
+### C4 — Pop open the digs agent session via herdr
+- **What**: `herdr --remote digs` (or the helper
+  `scripts/herdr_attach.sh digs`). Omarchy already binds `SUPER CTRL + RETURN`
+  -> Herdr and `SUPER ALT + RETURN` -> tmux.
+- **Why**: `digs` runs a persistent herdr session hosting the opencode agent
+  conversation; remote-attach lands you back in it from the laptop.
+- **How**: see `modules/herdr/README.md`. Requires tailscale SSH from the
+  laptop to `digs`.
+- **Revert**: none (it's just an attach).
+
 ## Order
 1. `scripts/tailscale_up_client.sh up`
 2. optionally `up --exit-node digs`
 3. browse / pull `bldr-Omarchy` from the `digs` serve URL or over SSH.
+4. `scripts/herdr_attach.sh digs` to resume the digs agent session.
