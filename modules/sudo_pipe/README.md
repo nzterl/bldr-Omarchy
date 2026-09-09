@@ -78,8 +78,10 @@ replaces the private key.
 
 ## Credentials
 
-- user private key: `~/.config/vault-exec/id_vault` (0600)
-- root public key:  `/etc/vault-exec/vault.pub` (0600)
+- allowlist + vault.pub are **public** (authority = private key possession):
+  `/etc/vault-exec/` is world-readable, so `vaultctl list` works for any tailnet user
+- user private key: `~/.config/vault-exec/id_vault` (0600, never leaves this box)
+- root public key:  `/etc/vault-exec/vault.pub` (0644, safe to share)
 - queue/done:       `/run/vault-exec/queue` `/run/vault-exec/done` (1777, tmpfs)
 - seen-set (replay):`/run/vault-exec/seen/`
 

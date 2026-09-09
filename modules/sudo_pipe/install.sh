@@ -36,7 +36,9 @@ chmod 0644 "$KEY_DIR/vault.pub"
 
 # --- root-side install (sudo) ------------------------------------------------
 echo "-- installing root-side (sudo)"
-sudo install -d -m 0700 "$VAULT_DIR"
+# allowlist + vault.pub are public (authority = private key, which stays in
+# $KEY_DIR only); the dir holds nothing secret, so keep it world-readable.
+sudo install -d -m 0755 "$VAULT_DIR"
 sudo install -m 0644 "$KEY_DIR/vault.pub" "$VAULT_DIR/vault.pub"
 sudo install -m 0644 "$SELF/allowlist" "$VAULT_DIR/allowlist"
 sudo install -m 0755 "$SELF/vault-exec.sh" "$BIN/vault-exec.sh"
