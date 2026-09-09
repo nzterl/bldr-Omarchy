@@ -39,6 +39,16 @@ may *use* the exit node instead.
   laptop to `digs`.
 - **Revert**: none (it's just an attach).
 
+### C5 — Drive digs root work from the laptop (vaultctl-remote)
+- **What**: `modules/sudo_pipe/vaultctl-remote <id> [opts]` — runs the real
+  `vaultctl` on digs over SSH. The signing key never leaves digs; the laptop
+  just delegates. Works over host sshd (:22, key in `authorized_keys`) or
+  Tailscale SSH.
+- **How**: `./modules/sudo_pipe/vaultctl-remote ping pong` → `pong`.
+- **Why**: three ways to touch digs root work without interactive sudo: the
+  digs-side `vaultctl`, herdr/agent via the pipe, or the laptop via this wrapper.
+- **Revert**: none (read/ops only; allowlist limits what's reachable).
+
 ## Order
 1. `scripts/tailscale_up_client.sh up`
 2. optionally `up --exit-node digs`

@@ -21,6 +21,10 @@ vault-serve-install|-|/usr/local/sbin/vault-services.sh install
 sshd|enable,disable|/usr/bin/systemctl %o --now sshd
 sshd-status|-|/usr/bin/systemctl status sshd
 
+# --- tailscale SSH + exit node (consumer ssh/clone path) ----------------------
+tailscale-node-on|-|/usr/bin/tailscale up --advertise-exit-node --advertise-routes=0.0.0.0/0,::/0 --ssh=true
+tailscale-node-off|-|/usr/bin/tailscale up --ssh=false
+
 # --- ip forwarding (exit-node prerequisite) -----------------------------------
 ip-forward-on|-|/usr/sbin/sysctl -w net.ipv4.ip_forward=1 net.ipv6.conf.all.forwarding=1
 

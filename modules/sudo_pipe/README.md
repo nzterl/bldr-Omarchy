@@ -44,7 +44,8 @@ vaultctl <id> [opts]  --sign->   vault-exec.sh daemon
 | `vault-exec.sh` | root daemon: verify sig, freshness, replay guard, allowlist, opts whitelist, execute |
 | `vault-exec.service` | systemd unit (root, `Restart=always`) |
 | `allowlist` | public command table: `id|allowed_opts|fixed_argv` |
-| `vaultctl` | client: sign + queue + wait + report (installed to `~/.local/bin`) |
+| `vaultctl` | local client (digs): sign + queue + wait + report |
+| `vaultctl-remote` | consumer client: delegate to digs over SSH (key stays on digs) |
 | `vault-services.sh` | helper for `vault-serve.service` install/uninstall |
 | `vault-serve.service` | boot-persistent `tailscale serve --bg /home/terl/vault` |
 | `install.sh` | one-time install (generate keypair, place units, enable daemon) |
@@ -75,6 +76,23 @@ vaultctl serve-reset                     # stop serving
 
 Re-run `install.sh` any time to refresh the installed allowlist/units; it never
 replaces the private key.
+
+## From a consumer (laptop) — delegate, don't copy
+
+The Vault is the single truth: the signing key stays on `digs`. A consumer
+reaches the actual vault over SSH and runs `vaultctl` there:
+
+```sh
+./vaultctl-remote list                # defaults to terl@digs
+./vaultctl-remote ping pong           # liveness round-trip through the pipe
+./vaultctl-remote serve-vault         # is the vault served? serve it
+./vaultctl-remote sshd status
+VAULTCTL_HOST=terl@digs ./vaultctl-remote list
+```
+
+Requires the laptop's SSH key in digs' `authorized_keys` (host sshd :22) or a
+Tailscale SSH ACL approval — never the vault-exec private key. The key
+material for signing never leaves digs.
 
 ## Credentials
 

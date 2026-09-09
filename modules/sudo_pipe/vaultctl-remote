@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# vaultctl-remote — consumer-side client for digs' root pipe.
+#
+# The Vault is the single truth: the signing key stays on digs only. This
+# wrapper reaches back over Tailscale SSH and runs the real vaultctl there,
+# so a laptop drives digs root work (serve, sshd, ...) without ever copying
+# the private key. Requires: tailnet + Tailscale SSH (or sshd :22) ACLs.
+#
+#   vaultctl-remote <id> [opts...]    # run on digs
+#   vaultctl-remote ping pong         # liveness round-trip
+#   VAULTCTL_HOST=terl@digs vaultctl-remote list
+set -euo pipefail
+
+HOST="${VAULTCTL_HOST:-terl@digs}"
+VAULTCTL_REMOTE="${VAULTCTL_REMOTE:-/home/terl/.local/bin/vaultctl}"
+
+exec ssh -o BatchMode=yes -o ConnectTimeout=10 "$HOST" \
+  "$VAULTCTL_REMOTE" "$@"
