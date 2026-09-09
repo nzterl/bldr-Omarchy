@@ -9,7 +9,7 @@ version** your tailnet policy so `bldr-Omarchy` captures it as a tweak.
 2. Save it here, e.g. `tailnet.acl.json`.
 3. Document the service/reach rules that matter for `digs`:
    - who may `ssh` into `digs`,
-   - who may read/serve the `~/current` share,
+   - who may read/serve the Vault (`/home/terl/vault`) and Current share,
    - who may use `digs` as an exit node.
 
 ## Placeholder

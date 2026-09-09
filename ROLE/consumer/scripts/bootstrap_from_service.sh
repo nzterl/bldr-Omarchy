@@ -1,39 +1,58 @@
 #!/usr/bin/env bash
-# ROLE: consumer — bootstrap bldr-Omarchy straight off the digs workshop service
-# and replay your role. This is the "run from service" path: the recipes live
-# on the service, and you pull them from it.
+# ROLE: consumer — bootstrap bldr-Omarchy and replay your role.
+# Dual path: git-first (the portable truth), serve-fallback (the digs static
+# listing) for machines that can reach the tailnet but not GitHub yet.
 #
 # Usage:
 #   ./bootstrap_from_service.sh             # fetch repo to ./bldr-Omarchy
-#   ./bootstrap_from_service.sh consumer    # fetch + run consumer scripts
-#   ./bootstrap_from_service.sh exit-node   # fetch + run exit-node scripts
+#   ./bootstrap_from_service.sh consumer    # fetch + print consumer run steps
+#   ./bootstrap_from_service.sh exit-node   # fetch + print exit-node run steps
 #
-# Base URL of the workshop service (the digs serve endpoint).
+# The vault serve endpoint + git remote (the seam lives in vault/env.sh).
 SERVE_URL="${SERVE_URL:-https://digs.tail82a0ed.ts.net}"
+REMOTE="${REMOTE:-git@github.com:nzterl/bldr-Omarchy.git}"
 REPO="bldr-Omarchy"
 DEST="${1:-$REPO}"; [[ $SERVE_URL == "$DEST" ]] && DEST="$REPO"
 role="${2:-}"
 
-# Serve is a static listing, so use wget --recursive (or curl each file).
-if command -v wget >/dev/null 2>&1; then
-  wget -q --mirror -nH --cut-dirs=0 -e robots=off -r \
-    "$SERVE_URL/$REPO/" -P "$DEST" 2>/dev/null \
-    || { echo "wget failed; falling back to curl" >&2; }
+# --- git-first: clone the portable truth -------------------------------------
+if command -v git >/dev/null 2>&1; then
+  if [[ -d "$DEST/.git" ]]; then
+    echo "present: $DEST — pulling"
+    git -C "$DEST" pull --ff-only 2>/dev/null || true
+  elif git clone --quiet "$REMOTE" "$DEST" 2>/dev/null; then
+    echo "cloned from git: $DEST"
+  else
+    echo "git clone failed ($REMOTE) — falling back to the digs serve" >&2
+  fi
 fi
 
-# Fallback: recursively curl the guessed file set (kept simple: README + scripts).
+# --- serve fallback: static listing (needs tailnet, no git/ssh) --------------
 if [[ ! -f "$DEST/README.md" ]]; then
-  mkdir -p "$DEST"
-  for f in README.md \
-           ROLE/consumer/TWEAKS.md \
-           ROLE/consumer/scripts/tailscale_up_client.sh \
-           ROLE/exit-node/TWEAKS.md \
-           ROLE/exit-node/scripts/01_tailscale_exit_node.sh \
-           ROLE/exit-node/scripts/02_shares.sh \
-           ROLE/exit-node/scripts/07_enable_ip_forwarding.sh; do
-    mkdir -p "$DEST/$(dirname "$f")"
-    curl -sS -o "$DEST/$f" "$SERVE_URL/$REPO/$f"
-  done
+  if command -v wget >/dev/null 2>&1; then
+    wget -q --mirror -nH --cut-dirs=0 -e robots=off -r \
+      "$SERVE_URL/$REPO/" -P "$DEST" 2>/dev/null \
+      || { echo "wget failed; falling back to curl" >&2; }
+  fi
+  if [[ ! -f "$DEST/README.md" ]]; then
+    mkdir -p "$DEST"
+    for f in README.md \
+             ROLE/consumer/TWEAKS.md \
+             ROLE/consumer/scripts/tailscale_up_client.sh \
+             ROLE/consumer/scripts/herdr_attach.sh \
+             ROLE/exit-node/TWEAKS.md \
+             ROLE/exit-node/scripts/00_vault_up.sh \
+             ROLE/exit-node/scripts/01_tailscale_exit_node.sh \
+             ROLE/exit-node/scripts/02_shares.sh \
+             ROLE/exit-node/scripts/06_enable_sshd.sh \
+             ROLE/exit-node/scripts/07_enable_ip_forwarding.sh \
+             ROLE/exit-node/scripts/08_enable_herdr_server.sh \
+             modules/sudo_pipe/install.sh \
+             modules/sudo_pipe/README.md; do
+      mkdir -p "$DEST/$(dirname "$f")"
+      curl -sS -o "$DEST/$f" "$SERVE_URL/$REPO/$f"
+    done
+  fi
 fi
 
 echo "fetched to: $DEST"

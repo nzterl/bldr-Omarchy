@@ -1,9 +1,9 @@
 # ROLE: consumer (laptop / other tailnet clients)
 
-A consumer joins the tailnet, can browse the `~/current` workshop over
-**`tailscale serve`**, and can `ssh`/`scp`/`sshfs` into **`digs`** over
-Tailscale SSH. No exit-node advertising here — a consumer may *use* the exit
-node instead.
+A consumer joins the tailnet, can browse the **Vault** (`/home/terl/vault`)
+over **`tailscale serve`**, and can `ssh`/`scp`/`sshfs` into **`digs`** over
+Tailscale SSH (or host SSH on :22). No exit-node advertising here — a consumer
+may *use* the exit node instead.
 
 ## Tweaks (with revert)
 
@@ -18,10 +18,13 @@ node instead.
   use case).
 - **Revert**: `tailscale up` without `--exit-node`.
 
-### C3 — Browse / fetch the workshop
-- **What**: open the `tailscale serve` URL for `digs` (browser), or
-  `ssh digs@digs` / `scp -r digs@digs:current/bldr-Omarchy .` / `sshfs`.
-- **Why**: "cruise" the `~/current` share and pull `bldr-Omarchy`.
+### C3 — Browse / fetch the Vault
+- **What**: open the `tailscale serve` URL for `digs`
+  (`https://digs.tail82a0ed.ts.net/`) in a browser, or
+  `ssh digs@digs` and read `/home/terl/vault/bldr-Omarchy`.
+- **Why**: browse the static Vault — the single source of truth for digs ops —
+  and pull `bldr-Omarchy`. Also mirrored on GitHub (`nzterl/bldr-Omarchy`)
+  for fetch without the tailnet: `git clone git@github.com:nzterl/bldr-Omarchy.git`.
 - **Revert**: none (read ops).
 
 ### C4 — Pop open the digs agent session via herdr
@@ -39,5 +42,5 @@ node instead.
 ## Order
 1. `scripts/tailscale_up_client.sh up`
 2. optionally `up --exit-node digs`
-3. browse / pull `bldr-Omarchy` from the `digs` serve URL or over SSH.
+3. browse / pull `bldr-Omarchy` — `scripts/bootstrap_from_service.sh` (git-first, serve-fallback)
 4. `scripts/herdr_attach.sh digs` to resume the digs agent session.

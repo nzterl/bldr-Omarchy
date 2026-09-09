@@ -23,7 +23,11 @@ case "${1:-up}" in
     echo "== sshd (:22, tagged sshd.service) =="
     sudo "$HERE/06_enable_sshd.sh" enable
     echo "== vault serve ($VAULT_URL -> $VAULT_DIR) =="
-    "$HERE/02_shares.sh" up
+    if command -v vaultctl >/dev/null 2>&1; then
+      vaultctl serve-vault      # via the signed-request root pipe (no password)
+    else
+      "$HERE/02_shares.sh" up
+    fi
     echo "== herdr 'digs' session server (tagged vault-herdr) =="
     "$HERE/08_enable_herdr_server.sh" enable
     echo
